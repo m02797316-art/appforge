@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppForge – Web App Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f7f6f3; --surface: #fff; --border: #e8e5df; --border-strong: #d0ccc4;
+  --text: #1a1917; --text-muted: #7a7570; --accent: #2563eb; --accent-light: #eff4ff;
+  --accent-hover: #1d4ed8; --success: #16a34a; --success-light: #f0fdf4;
+  --error: #dc2626; --error-light: #fef2f2; --warning: #d97706; --warning-light: #fffbeb;
+  --radius: 12px;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 16px; letter-spacing: -0.3px; }
+.logo-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+.badge { background: var(--success-light); color: var(--success); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; border: 1px solid #bbf7d0; }
+.builder { display: grid; grid-template-columns: 380px 1fr; height: calc(100vh - 56px); }
+.left-panel { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.panel-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
+.panel-header h2 { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.prompt-area { padding: 16px 20px; flex: 1; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.prompt-label { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 3px; }
+textarea { width: 100%; min-height: 140px; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 13.5px; line-height: 1.6; color: var(--text); background: var(--bg); resize: vertical; transition: border-color 0.2s; outline: none; }
+textarea:focus { border-color: var(--accent); background: white; }
+textarea::placeholder { color: #b0aba3; }
+.prompt-analyzer { padding: 8px 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--text-muted); display: none; gap: 6px; flex-wrap: wrap; align-items: center; }
+.analyzer-tag { padding: 2px 7px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.tag-simple { background: var(--success-light); color: var(--success); }
+.tag-medium { background: var(--warning-light); color: var(--warning); }
+.tag-complex { background: var(--accent-light); color: var(--accent); }
+.tag-feature { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+.examples-label { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 7px; }
+.examples-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.example-chip { padding: 7px 9px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; font-size: 11px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.15s; text-align: left; line-height: 1.3; }
+.example-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.build-section { padding: 12px 20px 16px; border-top: 1px solid var(--border); }
+.build-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.build-btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+.build-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.history-section { border-top: 1px solid var(--border); padding: 8px 20px; max-height: 130px; overflow-y: auto; display: none; }
+.history-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; }
+.history-item { display: flex; align-items: center; gap: 8px; padding: 5px 7px; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text-muted); transition: background 0.15s; }
+.history-item:hover { background: var(--bg); color: var(--text); }
+.history-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.right-panel { display: flex; flex-direction: column; overflow: hidden; background: #f0eee9; }
+.preview-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 18px; height: 46px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.preview-tabs { display: flex; gap: 2px; }
+.tab-btn { padding: 5px 13px; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-radius: 6px; transition: all 0.15s; }
+.tab-btn.active { background: var(--accent-light); color: var(--accent); }
+.tab-btn:hover:not(.active) { background: var(--bg); }
+.preview-actions { display: flex; gap: 7px; }
+.action-btn { padding: 5px 13px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+.action-btn:hover { border-color: var(--border-strong); color: var(--text); background: white; }
+.action-btn.primary { background: var(--success-light); border-color: #bbf7d0; color: var(--success); }
+.preview-content { flex: 1; overflow: hidden; position: relative; }
+iframe { width: 100%; height: 100%; border: none; display: block; }
+.code-view { display: none; width: 100%; height: 100%; overflow: auto; background: #1e1e2e; padding: 20px; }
+.code-view.visible { display: block; }
+.code-view pre { font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.7; color: #cdd6f4; white-space: pre-wrap; word-break: break-word; }
+.empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-muted); }
+.empty-icon { width: 60px; height: 60px; background: var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.empty-state p { font-size: 13px; text-align: center; max-width: 260px; line-height: 1.5; }
+.loading-overlay { position: absolute; inset: 0; background: rgba(247,246,243,0.97); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; backdrop-filter: blur(3px); padding: 32px; }
+.loading-overlay.visible { display: flex; }
+.progress-container { width: 100%; max-width: 440px; }
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+.progress-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.progress-percent { font-size: 22px; font-weight: 700; color: var(--accent); font-family: 'DM Mono', monospace; }
+.progress-track { width: 100%; height: 9px; background: var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #60a5fa); border-radius: 10px; width: 0%; transition: width 0.6s ease; position: relative; overflow: hidden; }
+.progress-fill::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shimmer 1.5s infinite; }
+@keyframes shimmer { to { left: 200%; } }
+.steps-list { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 4px; }
+.step-item { display: flex; align-items: center; gap: 10px; padding: 7px 11px; border-radius: 8px; font-size: 13px; transition: all 0.3s; color: var(--text-muted); }
+.step-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+.step-item.done { color: var(--success); }
+.step-icon { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+.spinner-tiny { width: 13px; height: 13px; border: 2px solid #bfdbfe; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-panel { position: absolute; inset: 0; background: var(--surface); display: none; flex-direction: column; overflow: hidden; }
+.error-panel.visible { display: flex; }
+.error-header { background: var(--error-light); border-bottom: 1px solid #fca5a5; padding: 13px 22px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.error-header h3 { font-size: 14px; font-weight: 600; color: var(--error); }
+.error-body { flex: 1; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+.error-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 5px; }
+.error-code-box { background: #1e1e2e; border-radius: 8px; padding: 13px; font-family: 'DM Mono', monospace; font-size: 12px; color: #f38ba8; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.error-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.error-info-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 11px; }
+.error-info-card .label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.error-info-card .value { font-size: 13px; color: var(--text); font-weight: 500; }
+.error-suggestions { background: var(--warning-light); border: 1px solid #fcd34d; border-radius: 8px; padding: 13px; }
+.error-suggestions ul { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
+.error-suggestions li { font-size: 13px; color: #92400e; display: flex; gap: 8px; line-height: 1.4; }
+.error-suggestions li::before { content: '→'; font-weight: 700; flex-shrink: 0; }
+.error-actions { padding: 12px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; background: var(--surface); flex-shrink: 0; }
+.err-btn { padding: 7px 14px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-muted); }
+.err-btn:hover { background: var(--bg); color: var(--text); }
+.err-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.err-btn.primary:hover { background: var(--accent-hover); }
+.status-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 7px 18px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-strong); }
+.status-dot.ready { background: var(--success); }
+.status-dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+.status-dot.error { background: var(--error); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* KEY SETUP */
+.key-banner { background: var(--warning-light); border-bottom: 1px solid #fcd34d; padding: 10px 20px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #92400e; }
+.key-input { flex: 1; padding: 7px 12px; border: 1.5px solid #fcd34d; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); background: white; outline: none; }
+.key-input:focus { border-color: var(--accent); }
+.key-save-btn { padding: 7px 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.key-save-btn:hover { background: var(--accent-hover); }
+.key-ok { background: var(--success-light); border-bottom: 1px solid #bbf7d0; padding: 8px 20px; font-size: 12px; color: var(--success); display: none; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    AppForge
+  </div>
+  <div class="badge">✓ Kostenlos</div>
+</header>
+
+<!-- KEY EINGABE BANNER -->
+<div class="key-banner" id="keyBanner">
+  🔑 Gemini API Key:
+  <input class="key-input" id="keyInput" type="password" placeholder="Hier deinen Gemini API Key einfügen...">
+  <button class="key-save-btn" onclick="saveKey()">Speichern</button>
+</div>
+<div class="key-ok" id="keyOk">
+  ✅ API Key gespeichert – AppForge ist bereit!
+  <button onclick="changeKey()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:var(--success);text-decoration:underline;">Ändern</button>
+</div>
+
+<div class="builder">
+  <div class="left-panel">
+    <div class="panel-header"><h2>Deine Idee</h2></div>
+    <div class="prompt-area">
+      <div>
+        <div class="prompt-label">Beschreibe deine Web-App</div>
+        <textarea id="promptInput" placeholder="Einfach oder komplex – z.B.: Eine To-Do App mit Kategorien... oder: Ein AI-Vertrags-Checker der AGBs analysiert..."></textarea>
+      </div>
+      <div class="prompt-analyzer" id="promptAnalyzer"></div>
+      <div>
+        <div class="examples-label">Schnellstart-Vorlagen</div>
+        <div class="examples-grid">
+          <button class="example-chip" onclick="setPrompt('Eine moderne To-Do App mit Kategorien, Prioritäten hoch/mittel/niedrig, Checkboxen und lokalem Speicher')">📝 To-Do App</button>
+          <button class="example-chip" onclick="setPrompt('Ein Taschenrechner mit Basis- und Wissenschaftsmodus und Animationen')">🧮 Rechner</button>
+          <button class="example-chip" onclick="setPrompt('Ein AI-Vertrags-Checker: Text reinkopieren, analysiert auf rote Flaggen, unfaire Klauseln mit Ampel-Bewertung grün/gelb/rot auf Deutsch')">⚖️ Vertrags-Checker</button>
+          <button class="example-chip" onclick="setPrompt('Ein Budget-Tracker mit Einnahmen, Ausgaben, Kategorien, Diagramm und Monatsübersicht')">💰 Budget-Tracker</button>
+          <button class="example-chip" onclick="setPrompt('Ein Passwort-Generator mit Länge, Zeichentypen, Stärke-Anzeige und Kopierfunktion')">🔐 Passwort-Gen</button>
+          <button class="example-chip" onclick="setPrompt('Eine Pomodoro App mit 25min Arbeits- und 5min Pausenphasen, Timer und Zähler')">🍅 Pomodoro</button>
+          <button class="example-chip" onclick="setPrompt('Ein Quiz-Spiel mit 10 Fragen, Punktestand, Timer und Ergebnisanzeige')">🎯 Quiz-Spiel</button>
+          <button class="example-chip" onclick="setPrompt('Ein Notizblock mit mehreren Notizen, Suche und automatischem Speichern')">📓 Notizblock</button>
+        </div>
+      </div>
+    </div>
+    <div id="historySection" class="history-section">
+      <div class="history-label">Verlauf</div>
+      <div id="historyList"></div>
+    </div>
+    <div class="build-section">
+      <button class="build-btn" id="buildBtn" onclick="buildApp()">
+        <span id="btnIcon">⚡</span>
+        <span id="btnText">App erstellen</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="preview-header">
+      <div class="preview-tabs">
+        <button class="tab-btn active" id="tabPreview" onclick="showTab('preview')">🖥 Vorschau</button>
+        <button class="tab-btn" id="tabCode" onclick="showTab('code')">⟨/⟩ Code</button>
+      </div>
+      <div class="preview-actions">
+        <button class="action-btn" onclick="openFullscreen()" id="fullscreenBtn" style="display:none">↗ Vollbild</button>
+        <button class="action-btn primary" onclick="downloadApp()" id="downloadBtn" style="display:none">⬇ Download</button>
+      </div>
+    </div>
+    <div class="preview-content">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">⚡</div>
+        <h3>Bereit zum Bauen</h3>
+        <p>API Key eingeben, dann Prompt rein und App erstellen</p>
+      </div>
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="progress-container">
+          <div class="progress-header">
+            <div class="progress-title">App wird gebaut...</div>
+            <div class="progress-percent" id="progressPercent">0%</div>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+        <div class="steps-list">
+          <div class="step-item" id="step-0"><span class="step-icon">🔍</span> Prompt analysieren</div>
+          <div class="step-item" id="step-1"><span class="step-icon">🏗</span> Struktur planen</div>
+          <div class="step-item" id="step-2"><span class="step-icon">📝</span> HTML erstellen</div>
+          <div class="step-item" id="step-3"><span class="step-icon">🎨</span> CSS Design bauen</div>
+          <div class="step-item" id="step-4"><span class="step-icon">⚙️</span> JavaScript implementieren</div>
+          <div class="step-item" id="step-5"><span class="step-icon">🔗</span> Features verknüpfen</div>
+          <div class="step-item" id="step-6"><span class="step-icon">✅</span> Qualitätsprüfung</div>
+        </div>
+      </div>
+      <iframe id="previewFrame" style="display:none"></iframe>
+      <div class="code-view" id="codeView"><pre id="codeContent"></pre></div>
+      <div class="error-panel" id="errorPanel">
+        <div class="error-header">
+          <h3>❌ Fehler – Detailanalyse</h3>
+          <button class="err-btn" onclick="closeError()">✕</button>
+        </div>
+        <div class="error-body">
+          <div><div class="error-section-title">Fehlermeldung</div><div class="error-code-box" id="errorMessage"></div></div>
+          <div class="error-info-grid">
+            <div class="error-info-card"><div class="label">Fehlertyp</div><div class="value" id="errorType">–</div></div>
+            <div class="error-info-card"><div class="label">Zeitpunkt</div><div class="value" id="errorTime">–</div></div>
+            <div class="error-info-card"><div class="label">Schritt</div><div class="value" id="errorStep">–</div></div>
+            <div class="error-info-card"><div class="label">HTTP Status</div><div class="value" id="errorStatus">–</div></div>
+          </div>
+          <div class="error-suggestions">
+            <div class="error-section-title">💡 Lösungsvorschläge</div>
+            <ul id="errorSuggestions"></ul>
+          </div>
+        </div>
+        <div class="error-actions">
+          <button class="err-btn primary" onclick="buildApp()">🔄 Erneut versuchen</button>
+          <button class="err-btn" onclick="downloadErrorLog()">⬇ Fehlerlog (.txt)</button>
+          <button class="err-btn" onclick="closeError()">✕ Schließen</button>
+        </div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">API Key eingeben um zu starten</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentCode = '', currentTab = 'preview', history = [], lastError = null;
+let apiKey = localStorage.getItem('gemini_api_key') || '';
+
+const STEP_ICONS = ['🔍','🏗','📝','🎨','⚙️','🔗','✅'];
+const STEP_TIMINGS = [500, 1000, 1700, 2600, 3600, 4700, 0];
+const STEP_PERCENTS = [8, 18, 35, 52, 70, 87, 97];
+
+// Key beim Start laden
+window.addEventListener('load', () => {
+  if (apiKey) {
+    document.getElementById('keyBanner').style.display = 'none';
+    document.getElementById('keyOk').style.display = 'flex';
+    document.getElementById('keyInput').value = apiKey;
+    setStatus('ready', 'Bereit – Prompt eingeben und App erstellen');
+    document.getElementById('emptyState').querySelector('p').textContent = 'Prompt eingeben und auf "App erstellen" klicken';
+  }
+});
+
+function saveKey() {
+  const key = document.getElementById('keyInput').value.trim();
+  if (!key) { alert('Bitte einen gültigen API Key eingeben!'); return; }
+  apiKey = key;
+  localStorage.setItem('gemini_api_key', key);
+  document.getElementById('keyBanner').style.display = 'none';
+  document.getElementById('keyOk').style.display = 'flex';
+  setStatus('ready', 'API Key gespeichert – bereit!');
+  document.getElementById('emptyState').querySelector('p').textContent = 'Prompt eingeben und auf "App erstellen" klicken';
+}
+
+function changeKey() {
+  document.getElementById('keyOk').style.display = 'none';
+  document.getElementById('keyBanner').style.display = 'flex';
+  document.getElementById('keyInput').focus();
+}
+
+document.getElementById('promptInput').addEventListener('input', function() { analyzePrompt(this.value); });
+
+function analyzePrompt(text) {
+  const a = document.getElementById('promptAnalyzer');
+  if (!text || text.trim().length < 15) { a.style.display = 'none'; return; }
+  const words = text.trim().split(/\s+/).length;
+  const features = [];
+  [[/speicher|localstorage/i,'💾 Speicherung'],[/chart|diagram/i,'📊 Diagramme'],[/ki\b|ai\b|analyse/i,'🤖 KI'],[/timer|countdown/i,'⏱ Timer'],[/upload|pdf/i,'📁 Upload'],[/export|download/i,'⬇ Export'],[/suche|filter/i,'🔍 Suche'],[/ampel|flagge|check/i,'✅ Prüfung']].forEach(([r,l])=>{ if(r.test(text)) features.push(l); });
+  let c = words < 12 ? 'Einfach' : words < 35 ? 'Mittel' : 'Komplex';
+  let cc = words < 12 ? 'tag-simple' : words < 35 ? 'tag-medium' : 'tag-complex';
+  a.style.display = 'flex';
+  a.innerHTML = `<span style="font-size:11px;color:var(--text-muted)">Erkannt:</span><span class="analyzer-tag ${cc}">${c}</span>${features.map(f=>`<span class="analyzer-tag tag-feature">${f}</span>`).join('')}<span style="font-size:11px;color:var(--text-muted);margin-left:auto">${words} Wörter</span>`;
+}
+
+function setPrompt(t) { document.getElementById('promptInput').value = t; analyzePrompt(t); document.getElementById('promptInput').focus(); }
+function showTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabPreview').classList.toggle('active', tab==='preview');
+  document.getElementById('tabCode').classList.toggle('active', tab==='code');
+  document.getElementById('previewFrame').style.display = tab==='preview' && currentCode ? 'block' : 'none';
+  document.getElementById('codeView').classList.toggle('visible', tab==='code' && !!currentCode);
+}
+function setStatus(s, t) { document.getElementById('statusDot').className = 'status-dot ' + s; document.getElementById('statusText').textContent = t; }
+function setProgress(pct, active) {
+  document.getElementById('progressFill').style.width = Math.round(pct) + '%';
+  document.getElementById('progressPercent').textContent = Math.round(pct) + '%';
+  for (let i = 0; i < 7; i++) {
+    const el = document.getElementById('step-' + i);
+    const icon = el.querySelector('.step-icon');
+    if (i < active) { el.className = 'step-item done'; icon.textContent = '✓'; }
+    else if (i === active) { el.className = 'step-item active'; icon.innerHTML = '<div class="spinner-tiny"></div>'; }
+    else { el.className = 'step-item'; icon.textContent = STEP_ICONS[i]; }
+  }
+}
+function resetSteps() { for(let i=0;i<7;i++){const el=document.getElementById('step-'+i);el.className='step-item';el.querySelector('.step-icon').textContent=STEP_ICONS[i];} }
+
+async function buildApp() {
+  if (!apiKey) { alert('Bitte zuerst deinen Gemini API Key oben eingeben!'); return; }
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) { document.getElementById('promptInput').style.borderColor='#ef4444'; document.getElementById('promptInput').focus(); setTimeout(()=>{document.getElementById('promptInput').style.borderColor='';},2000); return; }
+
+  document.getElementById('buildBtn').disabled = true;
+  document.getElementById('btnText').textContent = 'Wird gebaut...';
+  document.getElementById('btnIcon').textContent = '⏳';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('previewFrame').style.display = 'none';
+  document.getElementById('codeView').classList.remove('visible');
+  document.getElementById('errorPanel').classList.remove('visible');
+  document.getElementById('loadingOverlay').classList.add('visible');
+  document.getElementById('fullscreenBtn').style.display = 'none';
+  document.getElementById('downloadBtn').style.display = 'none';
+  setStatus('loading', 'App wird generiert...'); resetSteps(); setProgress(2, 0);
+
+  const timeouts = [];
+  STEP_TIMINGS.forEach((delay, i) => { if(delay>0) timeouts.push(setTimeout(()=>setProgress(STEP_PERCENTS[i],i), delay)); });
+
+  const ctx = { timestamp: new Date().toLocaleString('de-DE'), step: 'API-Anfrage senden', httpStatus: '–', prompt };
+
+  const systemInstruction = `Du bist ein Elite-Webentwickler. Erstelle vollständige, produktionsreife HTML-Web-Apps.
+REGELN:
+1. Antworte NUR mit vollständigem HTML (<!DOCTYPE html> bis </html>) – KEIN Text davor/danach, KEINE Backticks
+2. Alles in EINER Datei: CSS in <style>, JS in <script>
+3. Erlaubt: Google Fonts, Chart.js von cdnjs
+4. JEDES Feature vollständig implementieren – keine Platzhalter
+5. localStorage für Datenpersistenz
+6. Responsiv, professionelles modernes Design
+7. JavaScript-Fehlerbehandlung einbauen
+8. Sofort beim ersten Laden funktionsfähig`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemInstruction }] },
+          contents: [{ parts: [{ text: `Erstelle diese Web-App vollständig und fehlerfrei:\n\n${prompt}` }] }],
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }
+        })
+      }
+    );
+
+    ctx.httpStatus = response.status; ctx.step = 'Antwort verarbeiten';
+    if (!response.ok) {
+      const e = await response.json().catch(()=>({}));
+      throw new Error(`HTTP ${response.status}: ${e?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    let code = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    code = code.replace(/^```html\n?/gi,'').replace(/^```\n?/g,'').replace(/\n?```$/g,'').trim();
+
+    ctx.step = 'Code validieren';
+    if (!code.includes('<!DOCTYPE') && !code.includes('<html')) {
+      throw new Error('Kein gültiger HTML-Code erhalten. Antwort: ' + code.substring(0,200));
+    }
+
+    timeouts.forEach(clearTimeout); setProgress(100, 7);
+    await new Promise(r=>setTimeout(r,400));
+
+    currentCode = code; addToHistory(prompt);
+    document.getElementById('loadingOverlay').classList.remove('visible');
+    const iframe = document.getElementById('previewFrame');
+    iframe.style.display = currentTab==='preview' ? 'block' : 'none';
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open(); doc.write(code); doc.close();
+    document.getElementById('codeContent').textContent = code;
+    if (currentTab==='code') document.getElementById('codeView').classList.add('visible');
+    document.getElementById('fullscreenBtn').style.display = 'flex';
+    document.getElementById('downloadBtn').style.display = 'flex';
+    setStatus('ready', `✓ App erstellt – "${prompt.substring(0,50)}${prompt.length>50?'...':''}"`);
+
+  } catch(err) {
+    timeouts.forEach(clearTimeout);
+    document.getElementById('loadingOverlay').classList.remove('visible');
+    lastError = {
+      message: err.message,
+      type: getErrType(err.message),
+      timestamp: ctx.timestamp,
+      step: ctx.step,
+      httpStatus: String(ctx.httpStatus),
+      prompt,
+      suggestions: getErrSuggestions(err.message)
+    };
+    document.getElementById('errorMessage').textContent = lastError.message;
+    document.getElementById('errorType').textContent = lastError.type;
+    document.getElementById('errorTime').textContent = lastError.timestamp;
+    document.getElementById('errorStep').textContent = lastError.step;
+    document.getElementById('errorStatus').textContent = lastError.httpStatus;
+    document.getElementById('errorSuggestions').innerHTML = lastError.suggestions.map(s=>`<li>${s}</li>`).join('');
+    document.getElementById('errorPanel').classList.add('visible');
+    setStatus('error', '✗ Fehler aufgetreten');
+  }
+
+  document.getElementById('buildBtn').disabled = false;
+  document.getElementById('btnText').textContent = 'Neu erstellen';
+  document.getElementById('btnIcon').textContent = '⚡';
+}
+
+function getErrType(m) {
+  if (/failed to fetch|cors/i.test(m)) return 'Netzwerkfehler';
+  if (m.includes('400')) return 'Ungültige Anfrage';
+  if (m.includes('401')||m.includes('403')) return 'API Key ungültig';
+  if (m.includes('429')) return 'Rate Limit erreicht';
+  if (m.includes('500')) return 'Server-Fehler';
+  return 'Allgemeiner Fehler';
+}
+
+function getErrSuggestions(m) {
+  if (m.includes('401')||m.includes('403')) return ['API Key prüfen – er könnte falsch sein','Neuen Key bei aistudio.google.com erstellen','Key nochmal kopieren und neu eingeben'];
+  if (m.includes('429')) return ['Kurz warten (30 Sek.) und erneut versuchen','Prompt etwas kürzen'];
+  if (/failed to fetch/i.test(m)) return ['Internetverbindung prüfen','Adblocker deaktivieren','Browser neu starten'];
+  return ['Erneut versuchen','Prompt vereinfachen','API Key prüfen'];
+}
+
+function closeError() { document.getElementById('errorPanel').classList.remove('visible'); if(!currentCode) document.getElementById('emptyState').style.display='flex'; }
+
+function downloadErrorLog() {
+  if (!lastError) return;
+  const txt = `AppForge – Fehlerprotokoll\n==========================\nZeitpunkt: ${lastError.timestamp}\nFehlertyp: ${lastError.type}\nHTTP Status: ${lastError.httpStatus}\nSchritt: ${lastError.step}\n\nFEHLERMELDUNG:\n${lastError.message}\n\nPROMPT:\n${lastError.prompt}\n\nLÖSUNGEN:\n${lastError.suggestions.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n`;
+  const blob = new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`appforge-fehler-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(url);
+}
+
+function addToHistory(prompt) {
+  history.unshift({prompt, code: currentCode});
+  if(history.length>10) history.pop();
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  section.style.display = 'block'; list.innerHTML = '';
+  history.forEach(item => {
+    const div = document.createElement('div'); div.className='history-item';
+    div.innerHTML=`<span>🗂 ${item.prompt}</span>`;
+    div.onclick=()=>{
+      currentCode=item.code; document.getElementById('promptInput').value=item.prompt; analyzePrompt(item.prompt);
+      document.getElementById('emptyState').style.display='none'; document.getElementById('errorPanel').classList.remove('visible');
+      const iframe=document.getElementById('previewFrame'); iframe.style.display=currentTab==='preview'?'block':'none';
+      const doc=iframe.contentDocument||iframe.contentWindow.document; doc.open();doc.write(item.code);doc.close();
+      document.getElementById('codeContent').textContent=item.code;
+      document.getElementById('fullscreenBtn').style.display='flex'; document.getElementById('downloadBtn').style.display='flex';
+      setStatus('ready',`Geladen: "${item.prompt.substring(0,45)}..."`);
+    };
+    list.appendChild(div);
+  });
+}
+
+function openFullscreen() { if(!currentCode)return; const win=window.open('','_blank'); win.document.write(currentCode); win.document.close(); }
+function downloadApp() {
+  if(!currentCode)return;
+  const blob=new Blob([currentCode],{type:'text/html'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='meine-app.html'; a.click(); URL.revokeObjectURL(url);
+}
+document.getElementById('promptInput').addEventListener('keydown', e=>{ if(e.ctrlKey&&e.key==='Enter') buildApp(); });
+</script>
+</body>
+</html>
