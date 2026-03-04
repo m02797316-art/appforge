@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vertrags-Checker KI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f4ef;
+    --surface: #ffffff;
+    --accent: #1a1a2e;
+    --gold: #c9a84c;
+    --red: #c0392b;
+    --orange: #e67e22;
+    --green: #27ae60;
+    --text: #2c2c2c;
+    --muted: #888;
+    --border: #e0ddd6;
+    --shadow: 0 4px 24px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 28px 40px;
+  }
+  header .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+  }
+  header .logo span { color: var(--gold); }
+  header .subtitle {
+    font-size: 0.82rem;
+    color: #aaa;
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .card-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  .api-row {
+    display: flex;
+    gap: 10px;
+  }
+  .api-row input {
+    flex: 1;
+    padding: 11px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    background: #fafafa;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .api-row input:focus { border-color: var(--gold); }
+  .api-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .api-hint a { color: var(--gold); text-decoration: none; }
+  .tabs {
+    display: flex;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    width: fit-content;
+    margin-bottom: 18px;
+  }
+  .tab-btn {
+    padding: 9px 20px;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--accent); color: white; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    padding: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    resize: vertical;
+    background: #fafafa;
+    outline: none;
+    transition: border-color 0.2s;
+    color: var(--text);
+  }
+  textarea:focus { border-color: var(--gold); }
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafafa;
+    position: relative;
+  }
+  .upload-zone:hover { border-color: var(--gold); background: #fffbf2; }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .upload-zone p { color: var(--muted); font-size: 0.92rem; }
+  .file-name { margin-top: 12px; font-weight: 600; color: var(--accent); font-size: 0.9rem; }
+  .btn-analyze {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 20px;
+  }
+  .btn-analyze:hover { background: #2d2d4e; transform: translateY(-1px); }
+  .btn-analyze:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 56px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { color: var(--muted); }
+  .results { display: none; }
+  .ampel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .ampel-circle {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+  .ampel-circle.rot { background: var(--red); }
+  .ampel-circle.gelb { background: var(--orange); }
+  .ampel-circle.gruen { background: var(--green); }
+  .ampel-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .ampel-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+  .flags-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 14px;
+    padding-left: 2px;
+  }
+  .flag-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 5px solid;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .flag-card.hoch { border-left-color: var(--red); }
+  .flag-card.mittel { border-left-color: var(--orange); }
+  .flag-card.niedrig { border-left-color: var(--green); }
+  .flag-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  .flag-title { font-weight: 600; font-size: 1rem; color: var(--accent); flex: 1; }
+  .badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .badge.hoch { background: #fde8e6; color: var(--red); }
+  .badge.mittel { background: #fef3e2; color: #b8600e; }
+  .badge.niedrig { background: #e8f8ee; color: #1e8449; }
+  .flag-desc { font-size: 0.9rem; line-height: 1.7; color: #555; }
+  .no-flags {
+    text-align: center;
+    padding: 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+  }
+  .error-box {
+    display: none;
+    background: #fde8e6;
+    border: 1px solid #f5b7b1;
+    border-radius: 10px;
+    padding: 16px 20px;
+    color: var(--red);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+  .btn-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 12px 24px;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-new:hover { background: var(--accent); color: white; }
+  .disclaimer {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f0ede7;
+    border-radius: 8px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Vertrags<span>Checker</span> KI</div>
+  <div class="subtitle">Automatische Vertragsanalyse · Powered by Claude AI</div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-label">🔑 API-Zugang</div>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-…  (Claude / Anthropic API-Key)" />
+    </div>
+    <div class="api-hint">
+      Kostenloser Key auf <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → „API Keys". Wird nur lokal verwendet, nie gespeichert.
+    </div>
+  </div>
+
+  <div class="card" id="inputSection">
+    <div class="card-title">📄 Vertragstext eingeben</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('text')">✏️ Text einfügen</button>
+      <button class="tab-btn" onclick="switchTab('pdf')">📎 PDF / TXT hochladen</button>
+    </div>
+    <div class="tab-panel active" id="tab-text">
+      <textarea id="contractText" placeholder="Füge hier den Vertragstext ein – AGB, Mietvertrag, Arbeitsvertrag, Dienstleistungsvertrag …"></textarea>
+    </div>
+    <div class="tab-panel" id="tab-pdf">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="pdfFile" accept=".pdf,.txt" onchange="handleFile(this)" />
+        <div class="upload-icon">📂</div>
+        <p>PDF oder TXT-Datei hier ablegen oder klicken</p>
+        <div class="file-name" id="fileName"></div>
+      </div>
+    </div>
+    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">🔍 Vertrag jetzt analysieren</button>
+    <div class="disclaimer">⚠️ Kein Rechtsrat. Die KI-Analyse dient zur ersten Orientierung und ersetzt keine anwaltliche Beratung.</div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>KI analysiert den Vertrag auf rote Flaggen …<br><small>Das kann 15–30 Sekunden dauern.</small></p>
+  </div>
+
+  <div class="results" id="results">
+    <div class="ampel-card">
+      <div class="ampel-circle" id="ampelCircle"></div>
+      <div>
+        <div class="ampel-label" id="ampelLabel"></div>
+        <div class="ampel-desc" id="ampelDesc"></div>
+      </div>
+    </div>
+    <div class="flags-header" id="flagsHeader"></div>
+    <div id="flagsList"></div>
+    <button class="btn-new" onclick="resetForm()">← Neuen Vertrag analysieren</button>
+  </div>
+
+</div>
+
+<script>
+let pdfText = '';
+let activeTab = 'text';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0&&tab==='text')||(i===1&&tab==='pdf'));
+  });
+  document.getElementById('tab-text').classList.toggle('active', tab==='text');
+  document.getElementById('tab-pdf').classList.toggle('active', tab==='pdf');
+}
+
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('fileName').textContent = '📄 ' + file.name;
+  if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+    const r = new FileReader();
+    r.onload = e => { pdfText = e.target.result; document.getElementById('fileName').textContent += ' ✅'; };
+    r.readAsText(file);
+    return;
+  }
+  // PDF via pdf.js
+  const r = new FileReader();
+  r.onload = async (e) => {
+    try {
+      if (!window.pdfjsLib) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(); };
+          s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      }
+      const arr = new Uint8Array(e.target.result);
+      const pdf = await pdfjsLib.getDocument(arr).promise;
+      let text = '';
+      for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(s => s.str).join(' ') + '\n';
+      }
+      pdfText = text;
+      document.getElementById('fileName').textContent += ' ✅ Text extrahiert';
+    } catch(err) {
+      document.getElementById('fileName').textContent += ' ⚠️ Fehler – bitte TXT verwenden';
+    }
+  };
+  r.readAsArrayBuffer(file);
+}
+
+async function analyze() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { showError('Bitte trage deinen Claude API-Key ein.'); return; }
+
+  const text = activeTab === 'text'
+    ? document.getElementById('contractText').value.trim()
+    : pdfText.trim();
+  if (!text || text.length < 30) { showError('Bitte gib einen Vertragstext ein (mind. 30 Zeichen).'); return; }
+
+  clearError();
+  document.getElementById('inputSection').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+
+  const prompt = `Du bist ein erfahrener deutscher Rechtsanwalt. Analysiere folgenden Vertragstext auf problematische Klauseln nach deutschem Recht.
+
+Suche nach: unfairen/einseitigen Klauseln, versteckten Kosten, automatischen Preiserhöhungen, problematischen Kündigungsfristen/Verlängerungen, DSGVO-Verstößen, unzulässigen AGB-Klauseln (§307-309 BGB), Haftungsausschlüssen zu Lasten des Verbrauchers, einseitigen Änderungsvorbehalten.
+
+Antworte NUR mit diesem JSON (kein Text davor oder danach, keine Markdown-Backticks):
+{"gesamtbewertung":"rot"|"gelb"|"gruen","gesamtbeschreibung":"2-3 Sätze zur Gesamtlage","flaggen":[{"titel":"Kurzname","erklaerung":"2-4 Sätze Erklärung","risiko":"hoch"|"mittel"|"niedrig"}]}
+
+VERTRAGSTEXT:
+${text.substring(0, 14000)}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'HTTP ' + resp.status);
+    }
+    const data = await resp.json();
+    const raw = data.content.map(c => c.text || '').join('');
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Ungültige KI-Antwort erhalten.');
+    showResults(JSON.parse(match[0]));
+  } catch(err) {
+    document.getElementById('inputSection').style.display = 'block';
+    document.getElementById('loading').style.display = 'none';
+    showError('Fehler: ' + err.message);
+  }
+}
+
+function showResults(r) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  const map = { rot:['🔴','Hohes Risiko','rot'], gelb:['🟡','Mäßiges Risiko','gelb'], gruen:['🟢','Geringes Risiko','gruen'] };
+  const [icon, text, cls] = map[r.gesamtbewertung] || map.gelb;
+  const circle = document.getElementById('ampelCircle');
+  circle.textContent = icon; circle.className = 'ampel-circle ' + cls;
+  document.getElementById('ampelLabel').textContent = text;
+  document.getElementById('ampelDesc').textContent = r.gesamtbeschreibung || '';
+
+  const list = document.getElementById('flagsList');
+  list.innerHTML = '';
+  const flags = (r.flaggen || []).sort((a,b) => ({hoch:0,mittel:1,niedrig:2}[a.risiko]||1)-({hoch:0,mittel:1,niedrig:2}[b.risiko]||1));
+
+  document.getElementById('flagsHeader').textContent = flags.length
+    ? `🚩 ${flags.length} problematische Klausel${flags.length!==1?'n':''} gefunden`
+    : '';
+
+  if (!flags.length) {
+    list.innerHTML = '<div class="no-flags">✅ Keine problematischen Klauseln gefunden.</div>';
+    return;
+  }
+
+  const bl = { hoch:'Hohes Risiko', mittel:'Mittleres Risiko', niedrig:'Geringes Risiko' };
+  flags.forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'flag-card ' + f.risiko;
+    d.innerHTML = `<div class="flag-top"><div class="flag-title">${esc(f.titel)}</div><span class="badge ${f.risiko}">${bl[f.risiko]||f.risiko}</span></div><div class="flag-desc">${esc(f.erklaerung)}</div>`;
+    list.appendChild(d);
+  });
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showError(msg) { const b=document.getElementById('errorBox'); b.textContent='⚠️ '+msg; b.style.display='block'; }
+function clearError() { document.getElementById('errorBox').style.display='none'; }
+function resetForm() {
+  document.getElementById('results').style.display='none';
+  document.getElementById('inputSection').style.display='block';
+  document.getElementById('contractText').value='';
+  document.getElementById('fileName').textContent='';
+  pdfText=''; clearError();
+}
+</script>
+</body>
+</html>
